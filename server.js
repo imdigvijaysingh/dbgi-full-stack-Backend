@@ -74,20 +74,10 @@ app.use('/api/v1/notifications', require('./routes/notificationRoutes'));
 app.use('/api/v1/assignments', require('./routes/assignmentRoutes'));
 app.use('/api/v1/study-materials', require('./routes/studyMaterialRoutes'));
 
-// Serve frontend in production
-if (process.env.NODE_ENV === 'production') {
-  // Set static folder
-  app.use(express.static(path.join(__dirname, '../frontend/dist')));
-
-  // Any route that is not API will be redirected to index.html
-  app.get(/(.*)/, (req, res) => {
-    res.sendFile(path.resolve(__dirname, '../frontend/dist', 'index.html'));
-  });
-} else {
-  app.get('/', (req, res) => {
-    res.json({ message: 'Welcome to DBGI CMS API (Development Mode)' });
-  });
-}
+// Root route
+app.get('/', (req, res) => {
+  res.json({ message: 'Welcome to DBGI CMS API' });
+});
 
 // Error handling middleware
 app.use((err, req, res, next) => {
