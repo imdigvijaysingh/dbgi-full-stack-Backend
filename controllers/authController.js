@@ -130,3 +130,15 @@ exports.updateCredentials = async (req, res, next) => {
     res.status(400).json({ success: false, error: error.message });
   }
 };
+
+// @desc    Get total count of users
+// @route   GET /api/v1/auth/users/count
+// @access  Private
+exports.getUsersCount = async (req, res, next) => {
+  try {
+    const count = await User.countDocuments();
+    res.status(200).json({ success: true, count });
+  } catch (error) {
+    res.status(500).json({ success: false, error: error.message });
+  }
+};
