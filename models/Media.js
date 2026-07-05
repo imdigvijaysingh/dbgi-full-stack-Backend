@@ -18,6 +18,11 @@ const MediaSchema = new mongoose.Schema({
   uploadedAt: {
     type: Date,
     default: Date.now,
+  },
+  category: {
+    type: String,
+    default: 'general',
+    trim: true
   }
 });
 

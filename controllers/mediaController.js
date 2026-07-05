@@ -36,13 +36,40 @@ exports.uploadMedia = async (req, res, next) => {
 
 // @desc    Get all media
 // @route   GET /api/v1/media
-// @access  Private
+// @access  Public
 exports.getMedia = async (req, res, next) => {
   try {
-    const media = await Media.find().sort('-uploadedAt');
+    const query = {};
+    if (req.query.category) {
+      query.category = req.query.category;
+    }
+    const media = await Media.find(query).sort('-uploadedAt');
     res.status(200).json({
       success: true,
       count: media.length,
+      data: media
+    });
+  } catch (error) {
+    res.status(500).json({ success: false, error: error.message });
+  }
+};
+
+// @desc    Update media category
+// @route   PUT /api/v1/media/:id
+// @access  Private
+exports.updateMediaCategory = async (req, res, next) => {
+  try {
+    const media = await Media.findByIdAndUpdate(req.params.id, { category: req.body.category }, {
+      new: true,
+      runValidators: true
+    });
+
+    if (!media) {
+      return res.status(404).json({ success: false, error: 'Media not found' });
+    }
+
+    res.status(200).json({
+      success: true,
       data: media
     });
   } catch (error) {

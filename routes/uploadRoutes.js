@@ -2,7 +2,7 @@ const express = require('express');
 const multer = require('multer');
 const path = require('path');
 const fs = require('fs');
-const { uploadMedia, getMedia, deleteMedia, deleteMediaBulk } = require('../controllers/mediaController');
+const { uploadMedia, getMedia, deleteMedia, deleteMediaBulk, updateMediaCategory } = require('../controllers/mediaController');
 const { protect } = require('../middleware/authMiddleware');
 
 const router = express.Router();
@@ -41,6 +41,7 @@ const upload = multer({
 router.post('/upload', protect, upload.array('media', 20), uploadMedia);
 router.post('/delete-bulk', protect, deleteMediaBulk);
 router.get('/', getMedia);
+router.put('/:id', protect, updateMediaCategory);
 router.delete('/:id', protect, deleteMedia);
 
 module.exports = router;
