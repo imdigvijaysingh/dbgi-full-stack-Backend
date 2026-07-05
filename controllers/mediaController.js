@@ -39,7 +39,8 @@ exports.uploadMedia = async (req, res, next) => {
           filename: response.fileId, // Use ImageKit fileId for deletion
           url: response.url,
           mimetype: file.mimetype,
-          size: file.size
+          size: file.size,
+          category: req.body.category || 'general'
         });
 
         // Delete local file after upload
