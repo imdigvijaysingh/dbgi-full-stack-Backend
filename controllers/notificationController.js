@@ -1,5 +1,5 @@
-const Notification = require('../models/Notification');
-const Student = require('../models/Student');
+const Notification = require("../models/Notification");
+const Student = require("../models/Student");
 
 // @desc    Create a new notification (Admin)
 // @route   POST /api/v1/notifications
@@ -7,10 +7,15 @@ const Student = require('../models/Student');
 const createNotification = async (req, res) => {
   try {
     const { title, message, targetType, targetId } = req.body;
-    const notification = await Notification.create({ title, message, targetType, targetId });
+    const notification = await Notification.create({
+      title,
+      message,
+      targetType,
+      targetId,
+    });
     res.status(201).json(notification);
   } catch (error) {
-    res.status(500).json({ message: 'Server Error', error });
+    res.status(500).json({ message: "Server Error", error });
   }
 };
 
@@ -21,30 +26,32 @@ const getMyNotifications = async (req, res) => {
   try {
     const student = await Student.findById(req.student._id);
     if (!student) {
-       return res.status(404).json({ message: 'Student not found' });
+      return res.status(404).json({ message: "Student not found" });
     }
-    
-    const classQuery = student.currentClass ? `${student.currentClass.className} - ${student.currentClass.semester}` : null;
-    
+
+    const classQuery = student.currentClass
+      ? `${student.currentClass.className} - ${student.currentClass.semester}`
+      : null;
+
     const queryConditions = [
-      { targetType: 'all' },
-      { targetType: 'student', targetId: student.studentId }
+      { targetType: "all" },
+      { targetType: "student", targetId: student.studentId },
     ];
-    
+
     if (classQuery) {
-      queryConditions.push({ targetType: 'class', targetId: classQuery });
+      queryConditions.push({ targetType: "class", targetId: classQuery });
     }
 
     const notifications = await Notification.find({
-      $or: queryConditions
+      $or: queryConditions,
     }).sort({ createdAt: -1 });
-    
+
     res.json(notifications);
   } catch (error) {
-    res.status(500).json({ message: 'Server Error' });
+    res.status(500).json({ message: "Server Error" });
   }
 };
-};
+
 // @desc    Get all notifications (Admin)
 // @route   GET /api/v1/notifications
 // @access  Private/Admin
@@ -53,7 +60,7 @@ const getAllNotifications = async (req, res) => {
     const notifications = await Notification.find().sort({ createdAt: -1 });
     res.json(notifications);
   } catch (error) {
-    res.status(500).json({ message: 'Server Error' });
+    res.status(500).json({ message: "Server Error" });
   }
 };
 
@@ -63,10 +70,15 @@ const getAllNotifications = async (req, res) => {
 const deleteNotification = async (req, res) => {
   try {
     await Notification.findByIdAndDelete(req.params.id);
-    res.json({ message: 'Notification deleted' });
+    res.json({ message: "Notification deleted" });
   } catch (error) {
-    res.status(500).json({ message: 'Server Error' });
+    res.status(500).json({ message: "Server Error" });
   }
 };
 
-module.exports = { createNotification, getMyNotifications, getAllNotifications, deleteNotification };
+module.exports = {
+  createNotification,
+  getMyNotifications,
+  getAllNotifications,
+  deleteNotification,
+};
