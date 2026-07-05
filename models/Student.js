@@ -18,6 +18,31 @@ const markSchema = new mongoose.Schema({
   }
 });
 
+const attendanceRecordSchema = new mongoose.Schema({
+  subject: {
+    type: String,
+    required: true
+  },
+  month: {
+    type: String, // e.g., 'August 2026'
+    required: true
+  },
+  totalClasses: {
+    type: Number,
+    required: true,
+    default: 0
+  },
+  attendedClasses: {
+    type: Number,
+    required: true,
+    default: 0
+  },
+  percentage: {
+    type: Number,
+    default: 0
+  }
+});
+
 const classSchema = new mongoose.Schema({
   className: {
     type: String,
@@ -76,6 +101,7 @@ const studentSchema = new mongoose.Schema({
     type: Number,
     default: 0 // Percentage
   },
+  attendanceRecords: [attendanceRecordSchema],
   isActive: {
     type: Boolean,
     default: true

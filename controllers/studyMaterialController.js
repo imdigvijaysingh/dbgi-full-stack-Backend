@@ -45,14 +45,38 @@ const getMyStudyMaterials = async (req, res) => {
   try {
     const student = await Student.findById(req.student._id);
     if (!student || !student.currentClass) {
-       return res.json([]);
-    }
+    const classQuery = student.currentClass ? `${student.currentClass.className} - ${student.currentClass.semester}` : null;
+    if (!classQuery) return res.json([]);
     
-    const materials = await StudyMaterial.find({ targetClass: student.currentClass.className }).sort({ createdAt: -1 });
+    const materials = await StudyMaterial.find({ targetClass: classQuery }).sort({ createdAt: -1 });
+    res.json(materials);
+  } catch (error) {
+    res.status(500).json({ message: 'Server Error' });
+  }
+};
+};
+// @desc    Get all study materials (Admin)
+// @route   GET /api/v1/study-materials
+// @access  Private/Admin
+const getAllStudyMaterials = async (req, res) => {
+  try {
+    const materials = await StudyMaterial.find().sort({ createdAt: -1 });
     res.json(materials);
   } catch (error) {
     res.status(500).json({ message: 'Server Error' });
   }
 };
 
-module.exports = { createStudyMaterial, getMyStudyMaterials };
+// @desc    Delete study material (Admin)
+// @route   DELETE /api/v1/study-materials/:id
+// @access  Private/Admin
+const deleteStudyMaterial = async (req, res) => {
+  try {
+    await StudyMaterial.findByIdAndDelete(req.params.id);
+    res.json({ message: 'Study material deleted' });
+  } catch (error) {
+    res.status(500).json({ message: 'Server Error' });
+  }
+};
+
+module.exports = { createStudyMaterial, getMyStudyMaterials, getAllStudyMaterials, deleteStudyMaterial };

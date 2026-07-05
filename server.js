@@ -75,6 +75,7 @@ app.use('/api/v1/assignments', require('./routes/assignmentRoutes'));
 app.use('/api/v1/study-materials', require('./routes/studyMaterialRoutes'));
 app.use('/api/v1/classes', require('./routes/classRoutes'));
 app.use('/api/v1/users', require('./routes/userRoutes'));
+app.use('/api/v1/attendance', require('./routes/attendanceRoutes'));
 
 // Root route
 app.get('/', (req, res) => {
