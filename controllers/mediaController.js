@@ -1,6 +1,14 @@
 const Media = require('../models/Media');
-const cloudinary = require('cloudinary').v2;
+const fs = require('fs');
+const path = require('path');
 const logActivity = require('../utils/logger');
+const ImageKit = require('imagekit');
+
+const imagekit = new ImageKit({
+    publicKey : process.env.IMAGEKIT_PUBLIC_KEY,
+    privateKey : process.env.IMAGEKIT_PRIVATE_KEY,
+    urlEndpoint : process.env.IMAGEKIT_URL_ENDPOINT
+});
 
 // @desc    Upload media
 // @route   POST /api/v1/media/upload
@@ -11,14 +19,43 @@ exports.uploadMedia = async (req, res, next) => {
       return res.status(400).json({ success: false, error: 'Please upload at least one file' });
     }
 
-    const mediaDocs = req.files.map(file => {
-      return {
-        filename: file.filename, // This is the Cloudinary public_id
-        url: file.path, 
-        mimetype: file.mimetype,
-        size: file.size
-      };
-    });
+    const mediaDocs = [];
+
+    for (const file of req.files) {
+      try {
+        const fileData = fs.readFileSync(file.path);
+        const response = await new Promise((resolve, reject) => {
+          imagekit.upload({
+            file: fileData,
+            fileName: file.filename,
+            folder: '/devbhoomi_uploads'
+          }, (err, result) => {
+            if (err) reject(err);
+            else resolve(result);
+          });
+        });
+
+        mediaDocs.push({
+          filename: response.fileId, // Use ImageKit fileId for deletion
+          url: response.url,
+          mimetype: file.mimetype,
+          size: file.size
+        });
+
+        // Delete local file after upload
+        if (fs.existsSync(file.path)) {
+           fs.unlinkSync(file.path);
+        }
+      } catch (uploadError) {
+        console.error('ImageKit upload error:', uploadError);
+        // Clean up local file even if upload fails
+        if (fs.existsSync(file.path)) fs.unlinkSync(file.path);
+      }
+    }
+
+    if (mediaDocs.length === 0) {
+       return res.status(500).json({ success: false, error: 'Failed to upload files to ImageKit' });
+    }
 
     const media = await Media.insertMany(mediaDocs);
     await logActivity('Added', 'Media', `Uploaded ${media.length} files`, req.user || 'Admin User');
@@ -85,11 +122,16 @@ exports.deleteMedia = async (req, res, next) => {
       return res.status(404).json({ success: false, error: 'Media not found' });
     }
 
-    // Try to delete from Cloudinary
+    // Try to delete from ImageKit
     try {
-      await cloudinary.uploader.destroy(media.filename);
+      await new Promise((resolve, reject) => {
+        imagekit.deleteFile(media.filename, (err, result) => {
+           if (err) reject(err);
+           else resolve(result);
+        });
+      });
     } catch (e) {
-      console.log('Cloudinary delete error:', e);
+      console.log('ImageKit delete error:', e);
     }
 
     await media.deleteOne();
@@ -116,9 +158,14 @@ exports.deleteMediaBulk = async (req, res, next) => {
     // Delete physical files
     for (const media of mediaItems) {
       try {
-        await cloudinary.uploader.destroy(media.filename);
+        await new Promise((resolve, reject) => {
+          imagekit.deleteFile(media.filename, (err, result) => {
+             if (err) reject(err);
+             else resolve(result);
+          });
+        });
       } catch (e) {
-        console.log('Cloudinary delete error:', e);
+        console.log('ImageKit delete error:', e);
       }
     }
 
