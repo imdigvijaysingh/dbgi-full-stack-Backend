@@ -1,6 +1,5 @@
-const path = require('path');
 const Media = require('../models/Media');
-const fs = require('fs');
+const cloudinary = require('cloudinary').v2;
 const logActivity = require('../utils/logger');
 
 // @desc    Upload media
@@ -13,10 +12,9 @@ exports.uploadMedia = async (req, res, next) => {
     }
 
     const mediaDocs = req.files.map(file => {
-      const fileUrl = `${req.protocol}://${req.get('host')}/uploads/${file.filename}`;
       return {
-        filename: file.filename,
-        url: fileUrl,
+        filename: file.filename, // This is the Cloudinary public_id
+        url: file.path, 
         mimetype: file.mimetype,
         size: file.size
       };
@@ -87,10 +85,11 @@ exports.deleteMedia = async (req, res, next) => {
       return res.status(404).json({ success: false, error: 'Media not found' });
     }
 
-    // Try to delete the physical file
-    const filePath = path.join(__dirname, '..', 'uploads', media.filename);
-    if (fs.existsSync(filePath)) {
-      fs.unlinkSync(filePath);
+    // Try to delete from Cloudinary
+    try {
+      await cloudinary.uploader.destroy(media.filename);
+    } catch (e) {
+      console.log('Cloudinary delete error:', e);
     }
 
     await media.deleteOne();
@@ -115,12 +114,13 @@ exports.deleteMediaBulk = async (req, res, next) => {
     const mediaItems = await Media.find({ _id: { $in: ids } });
     
     // Delete physical files
-    mediaItems.forEach(media => {
-      const filePath = path.join(__dirname, '..', 'uploads', media.filename);
-      if (fs.existsSync(filePath)) {
-        fs.unlinkSync(filePath);
+    for (const media of mediaItems) {
+      try {
+        await cloudinary.uploader.destroy(media.filename);
+      } catch (e) {
+        console.log('Cloudinary delete error:', e);
       }
-    });
+    }
 
     await Media.deleteMany({ _id: { $in: ids } });
     await logActivity('Deleted', 'Media', `Deleted ${mediaItems.length} files in bulk`, req.user || 'Admin User');

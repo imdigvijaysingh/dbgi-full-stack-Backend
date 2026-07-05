@@ -1,24 +1,29 @@
 const express = require('express');
 const multer = require('multer');
+const { CloudinaryStorage } = require('multer-storage-cloudinary');
+const cloudinary = require('cloudinary').v2;
 const path = require('path');
-const fs = require('fs');
 const { uploadMedia, getMedia, deleteMedia, deleteMediaBulk, updateMediaCategory } = require('../controllers/mediaController');
 const { protect } = require('../middleware/authMiddleware');
 
 const router = express.Router();
 
-// Setup multer storage
-const storage = multer.diskStorage({
-  destination: function (req, file, cb) {
-    const uploadDir = path.join(__dirname, '..', 'uploads');
-    // Ensure the uploads directory exists
-    if (!fs.existsSync(uploadDir)) {
-      fs.mkdirSync(uploadDir, { recursive: true });
-    }
-    cb(null, uploadDir);
-  },
-  filename: function (req, file, cb) {
-    cb(null, `${Date.now()}-${file.originalname.replace(/\\s+/g, '-')}`);
+// Cloudinary configuration
+cloudinary.config({
+  cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
+  api_key: process.env.CLOUDINARY_API_KEY,
+  api_secret: process.env.CLOUDINARY_API_SECRET
+});
+
+// Setup multer storage with Cloudinary
+const storage = new CloudinaryStorage({
+  cloudinary: cloudinary,
+  params: async (req, file) => {
+    return {
+      folder: 'devbhoomi_uploads',
+      resource_type: 'auto',
+      public_id: `${Date.now()}-${file.originalname.replace(/\.\w+$/, '').replace(/\s+/g, '-')}`
+    };
   }
 });
 
