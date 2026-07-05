@@ -44,7 +44,9 @@ const createStudyMaterial = async (req, res) => {
 const getMyStudyMaterials = async (req, res) => {
   try {
     const student = await Student.findById(req.student._id);
-    if (!student || !student.currentClass) {
+    if (!student) {
+       return res.status(404).json({ message: 'Student not found' });
+    }
     const classQuery = student.currentClass ? `${student.currentClass.className} - ${student.currentClass.semester}` : null;
     if (!classQuery) return res.json([]);
     
@@ -53,7 +55,6 @@ const getMyStudyMaterials = async (req, res) => {
   } catch (error) {
     res.status(500).json({ message: 'Server Error' });
   }
-};
 };
 // @desc    Get all study materials (Admin)
 // @route   GET /api/v1/study-materials
